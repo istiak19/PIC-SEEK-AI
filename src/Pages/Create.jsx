@@ -2,6 +2,10 @@ import { useContext } from "react";
 import PageTitle from "../components/shared/PageTitle";
 import { AuthContext } from "../provider/AuthProvider";
 import Swal from "sweetalert2";
+import axios from "axios";
+
+const image_key = import.meta.env.VITE_IMGBB_apiKey;
+const image_api = `https://api.imgbb.com/1/upload?key=${image_key}`
 
 const Create = () => {
   const { user, login } = useContext(AuthContext);
@@ -44,7 +48,31 @@ const Create = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const getBuffer = async (prompt, category) => {
+    const finalPrompt = `imagine a ${category} : ${prompt}`;
+    const myForm = new FormData()
+    myForm.append('prompt', finalPrompt);
+    const response = await fetch('https://clipdrop-api.co/text-to-image/v1', {
+      method: 'POST',
+      headers: {
+        'x-api-key': import.meta.env.VITE_CD_apiKey,
+      },
+      body: myForm,
+    })
+    const buffer = response.arrayBuffer();
+    console.log(buffer);
+    return buffer;
+  }
+
+  const imageGenerateURL = async (buffer) => {
+    const formData = new FormData();
+    formData.append('image', new Blob([buffer], { type: "image/jpeg" }),
+      `${prompt}.jpg`);
+    const res = await axios.post(image_api, formData);
+    return res.data.data.url;
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!checkUser()) return;
@@ -76,9 +104,12 @@ const Create = () => {
     //validation End
 
     console.log({ prompt, category });
-    const finalPrompt = `imagine a ${category} : ${prompt}`;
-    console.log(finalPrompt);
-    return;
+    const buffer = await getBuffer(prompt, category)
+    const photo = await imageGenerateURL(buffer);
+    console.log("Image URL:", photo);
+    // const blob = new Blob([buffer], { type: "image/jpeg" });
+    // const imageUrl = URL.createObjectURL(blob);
+    // console.log("Image URL:---->", imageUrl);
   };
 
   return (
