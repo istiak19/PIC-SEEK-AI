@@ -10,9 +10,9 @@ const Creations = () => {
             const res = await axios.get('http://localhost:5000/api/v1/image/all')
             return res.data;
         }
-    })
+    });
 
-    console.log(images);
+    console.log(images)
 
     return (
         <div>
